@@ -129,7 +129,7 @@
         const data = await response.json();
 
         const temp = parseFloat(data.field1);
-        const pulse = parseInt(data.field2);
+        const pulse = parseInt(data.field2/2);
         const ecg = parseInt(data.field3);
 
         document.getElementById("tempValue").textContent = `${temp.toFixed(2)} °C`;
@@ -142,60 +142,60 @@
       }
     }
 
-    function checkForAlerts(temp, pulse, ecg) {
-      let alerts = [];
-      let dangerSigns = 0;
+   function checkForAlerts(temp, pulse, ecg) {
+  let alerts = [];
+  let dangerSigns = 0;
 
-      // Temperature check
-      if (temp > 38.5) {
-        alerts.push("🌡️ High fever detected (possible infection or heat stroke).");
-        dangerSigns++;
-      } else if (temp < 35.5) {
-        alerts.push("🌡️ Low body temperature detected.");
-        dangerSigns++;
-      }
+  // Temperature check
+  if (temp > 38.5) {
+    alerts.push("🌡️ High fever detected (possible infection or heat stroke).");
+    dangerSigns++;
+  } else if (temp < 35.5) {
+    alerts.push("❄️ Low body temperature detected (possible hypothermia or sensor contact issue).");
+    dangerSigns++;
+  }
 
-      // Pulse check
-      if (pulse > 1100) {
-        alerts.push("❤️ Pulse too high (possible stress or heart strain).");
-        dangerSigns++;
-      } else if (pulse < 400) {
-        alerts.push("❤️ Pulse too low (possible heart block or bradycardia).");
-        dangerSigns++;
-      }
+  // Pulse check
+  if (pulse > 1100) {
+    alerts.push("❤️ Pulse too high (possible stress or heart strain).");
+    dangerSigns++;
+  } else if (pulse < 400) {
+    alerts.push("💤 Pulse too low (possible heart block or bradycardia).");
+    dangerSigns++;
+  }
 
-      // ECG check
-      if (ecg > 3600 || ecg < 700) {
-        alerts.push("📈 Abnormal ECG signal detected.");
-        dangerSigns++;
-      }
+  // ECG check
+  if (ecg > 3600 || ecg < 700) {
+    alerts.push("📈 Abnormal ECG signal detected.");
+    dangerSigns++;
+  }
 
-      // Show warning messages
-      const alertBox = document.getElementById("alert-box");
-      if (alerts.length > 0) {
-        alertBox.innerHTML = alerts.join("<br>");
-        alertBox.style.display = "block";
-      } else {
-        alertBox.style.display = "none";
-      }
+  // Show warning messages
+  const alertBox = document.getElementById("alert-box");
+  if (alerts.length > 0) {
+    alertBox.innerHTML = alerts.join("<br>");
+    alertBox.style.display = "block";
+  } else {
+    alertBox.style.display = "none";
+  }
 
-      // If 2 or more danger signs → heart attack risk
-      const criticalBox = document.getElementById("critical-box");
-      if (dangerSigns >= 2) {
-        criticalBox.innerHTML = `
-          ❗ <strong>Warning:</strong> Multiple danger signs detected.<br>
-          🚨 Possible Heart Attack Risk!<br><br>
-          💊 Recommended: Take <strong>Aspirin 300mg</strong> or <strong>Sorbitrate</strong><br>
-          🏥 Visit the nearest hospital immediately. Do not delay.
-        `;
-        criticalBox.style.display = "block";
-      } else {
-        criticalBox.style.display = "none";
-      }
-    }
+  // If 2 or more danger signs → heart attack risk
+  const criticalBox = document.getElementById("critical-box");
+  if (dangerSigns >= 2) {
+    criticalBox.innerHTML = `
+      ❗ <strong>Warning:</strong> Multiple danger signs detected.<br>
+      🚨 Possible Heart Attack Risk!<br><br>
+      💊 Recommended: Take <strong>Aspirin 300mg</strong> or <strong>Sorbitrate</strong><br>
+      🏥 Visit the nearest hospital immediately. Do not delay.
+    `;
+    criticalBox.style.display = "block";
+  } else {
+    criticalBox.style.display = "none";
+  }
+}
 
     fetchSensorData();
-    setInterval(fetchSensorData, 1000); // Every second
+    setInterval(fetchSensorData, 10); // Every second
   </script>
 
 </body>
