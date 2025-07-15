@@ -1,34 +1,123 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Live Health Monitor Dashboard</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Live Health Monitor</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+      margin: 0;
+      padding: 0;
       text-align: center;
-      background: #f5f5f5;
     }
+
     h1 {
-      color: #333;
+      color: #343a40;
+      padding: 20px;
     }
-    iframe {
-      margin: 20px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+
+    .card-container {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 30px;
+      margin: 30px;
+    }
+
+    .card {
+      width: 280px;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      background: #ffffff;
+      transition: transform 0.2s ease;
+    }
+
+    .card:hover {
+      transform: scale(1.03);
+    }
+
+    .sensor-icon {
+      font-size: 40px;
+      margin-bottom: 10px;
+    }
+
+    .temperature {
+      color: #ff6b6b;
+    }
+
+    .pulse {
+      color: #1e90ff;
+    }
+
+    .ecg {
+      color: #28a745;
+    }
+
+    .value {
+      font-size: 40px;
+      font-weight: bold;
+    }
+
+    .label {
+      font-size: 18px;
+      color: #666;
+    }
+
+    .footer {
+      margin-top: 40px;
+      font-size: 14px;
+      color: #aaa;
     }
   </style>
 </head>
 <body>
+
   <h1>💓 Live Health Monitoring Dashboard</h1>
 
-  <h2>🌡️ Temperature (°C)</h2>
-  <iframe width="450" height="260" style="border: 1px solid #cccccc;" src="https://thingspeak.com/channels/3007706/charts/1?bgcolor=%23ffffff&color=%23d62020&dynamic=true&results=60&title=Temperature&type=line&xaxis=Time&yaxis=Celcius"></iframe>
+  <div class="card-container">
+    <div class="card temperature">
+      <div class="sensor-icon">🌡️</div>
+      <div class="value" id="tempValue">--</div>
+      <div class="label">Temperature (°C)</div>
+    </div>
+    <div class="card pulse">
+      <div class="sensor-icon">❤️</div>
+      <div class="value" id="pulseValue">--</div>
+      <div class="label">Pulse Value</div>
+    </div>
+    <div class="card ecg">
+      <div class="sensor-icon">📈</div>
+      <div class="value" id="ecgValue">--</div>
+      <div class="label">ECG Signal</div>
+    </div>
+  </div>
 
+  <div class="footer">⏱️ Beauty of heart is better than beauty of face</div>
 
-  <h2>❤️ Pulse Sensor</h2>
-  <iframe width="450" height="260" style="border: 1px solid #cccccc;" src="https://thingspeak.com/channels/3007706/charts/2?bgcolor=%23ffffff&color=%23d62020&dynamic=true&results=60&title=PulseValue&type=line&xaxis=Time&yaxis=Amp"></iframe>
+  <script>
+    const channelID = 3007706; // Your ThingSpeak Channel ID
+    const apiURL = `https://api.thingspeak.com/channels/${channelID}/feeds/last.json`;
 
-  <h2>📈 ECG Sensor</h2>
-  <iframe width="450" height="260" style="border: 1px solid #cccccc;" src="https://thingspeak.com/channels/3007706/charts/3?bgcolor=%23ffffff&color=%23d62020&dynamic=true&results=60&title=ECG&type=line&xaxis=Amp&yaxis=Time"></iframe>
+    async function fetchSensorData() {
+      try {
+        const response = await fetch(apiURL);
+        const data = await response.json();
+
+        document.getElementById("tempValue").textContent = parseFloat(data.field1).toFixed(2);
+        document.getElementById("pulseValue").textContent = data.field2;
+        document.getElementById("ecgValue").textContent = data.field3;
+      } catch (error) {
+        console.error("Error fetching ThingSpeak data:", error);
+      }
+    }
+
+    // Fetch on load and refresh every 15 seconds
+    fetchSensorData();
+    setInterval(fetchSensorData, 1000);
+  </script>
 
 </body>
 </html>
