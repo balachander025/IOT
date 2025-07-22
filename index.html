@@ -64,13 +64,16 @@
       color: #aaa;
     }
 
+    #alert-box, #critical-box, #location, #emergency-button {
+      margin: 20px auto;
+      max-width: 600px;
+    }
+
     #alert-box {
       background-color: #fff3cd;
       color: #856404;
       border: 1px solid #ffeeba;
       padding: 15px;
-      margin: 20px auto;
-      max-width: 600px;
       font-size: 16px;
       border-radius: 10px;
       display: none;
@@ -81,16 +84,35 @@
       color: #721c24;
       border: 1px solid #f5c6cb;
       padding: 15px;
-      margin: 20px auto;
-      max-width: 600px;
       font-size: 16px;
       border-radius: 10px;
       display: none;
     }
+
+    #historyTable {
+      margin: 20px auto;
+      border-collapse: collapse;
+      width: 90%;
+      max-width: 700px;
+    }
+
+    #historyTable th, #historyTable td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      font-size: 14px;
+    }
+
+    #emergency-button button {
+      padding: 10px 20px;
+      background: red;
+      color: white;
+      font-size: 16px;
+      border-radius: 10px;
+      border: none;
+    }
   </style>
 </head>
 <body>
-
   <h1>💓 Live Health Monitoring Dashboard</h1>
 
   <div class="card-container">
@@ -111,17 +133,41 @@
     </div>
   </div>
 
-  <!-- Alert Box -->
   <div id="alert-box"></div>
-
-  <!-- Critical Heart Attack Warning -->
   <div id="critical-box"></div>
+  <div id="location"></div>
+  <div id="emergency-button">
+    <a id="whatsappBtn" href="#" target="_blank">
+      <button>🚨 Send Emergency Alert</button>
+    </a>
+  </div>
+  <div>
+    <h3>📝 Last 10 Readings</h3>
+    <table id="historyTable">
+      <tr><th>Time</th><th>Temp</th><th>Pulse</th><th>ECG</th></tr>
+    </table>
+  </div>
 
-  <div class="footer">⏱️ Beauty of heart is better than beauty of face</div>
+  <div class="footer"></div>
 
   <script>
     const channelID = 3007706;
     const apiURL = `https://api.thingspeak.com/channels/${channelID}/feeds/last.json`;
+
+    let latitude = 0;
+    let longitude = 0;
+
+    navigator.geolocation.getCurrentPosition(function(position) {
+      latitude = position.coords.latitude;
+      longitude = position.coords.longitude;
+      document.getElementById("location").innerHTML = `📍 Location: <a href="https://maps.google.com/?q=${latitude},${longitude}" target="_blank">Open in Maps</a>`;
+    });
+
+    function updateEmergencyButton(temp, pulse, ecg) {
+      const msg = `🚨 Heart Attack Detected!\nTemp: ${temp}°C\nPulse: ${pulse}\nECG: ${ecg}\nLocation: https://maps.google.com/?q=${latitude},${longitude}`;
+      const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+      document.getElementById("whatsappBtn").href = url;
+    }
 
     async function fetchSensorData() {
       try {
@@ -129,74 +175,79 @@
         const data = await response.json();
 
         const temp = parseFloat(data.field1);
-        const pulse = parseInt(data.field2/2);
+        const pulse = parseInt(data.field2 / 2);
         const ecg = parseInt(data.field3);
 
         document.getElementById("tempValue").textContent = `${temp.toFixed(2)} °C`;
         document.getElementById("pulseValue").textContent = pulse;
         document.getElementById("ecgValue").textContent = ecg;
 
+        updateEmergencyButton(temp, pulse, ecg);
         checkForAlerts(temp, pulse, ecg);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     }
 
-   function checkForAlerts(temp, pulse, ecg) {
-  let alerts = [];
-  let dangerSigns = 0;
+    function checkForAlerts(temp, pulse, ecg) {
+      let alerts = [];
+      let dangerSigns = 0;
 
-  // Temperature check
-  if (temp > 38.5) {
-    alerts.push("🌡️ High fever detected (possible infection or heat stroke).");
-    dangerSigns++;
-  } else if (temp < 35.5) {
-    alerts.push("❄️ Low body temperature detected (possible hypothermia or sensor contact issue).");
-    dangerSigns++;
-  }
+      if (temp > 38.5) {
+        alerts.push("🌡️ High fever detected.");
+        dangerSigns++;
+      } else if (temp < 35.5) {
+        alerts.push("❄️ Low temperature detected.");
+        dangerSigns++;
+      }
 
-  // Pulse check
-  if (pulse > 1100) {
-    alerts.push("❤️ Pulse too high (possible stress or heart strain).");
-    dangerSigns++;
-  } else if (pulse < 400) {
-    alerts.push("💤 Pulse too low (possible heart block or bradycardia).");
-    dangerSigns++;
-  }
+      if (pulse > 1100) {
+        alerts.push("❤️ Pulse too high.");
+        dangerSigns++;
+      } else if (pulse < 400) {
+        alerts.push("💤 Pulse too low.");
+        dangerSigns++;
+      }
 
-  // ECG check
-  if (ecg > 3600 || ecg < 700) {
-    alerts.push("📈 Abnormal ECG signal detected.");
-    dangerSigns++;
-  }
+      if (ecg > 3600 || ecg < 700) {
+        alerts.push("📈 Abnormal ECG detected.");
+        dangerSigns++;
+      }
 
-  // Show warning messages
-  const alertBox = document.getElementById("alert-box");
-  if (alerts.length > 0) {
-    alertBox.innerHTML = alerts.join("<br>");
-    alertBox.style.display = "block";
-  } else {
-    alertBox.style.display = "none";
-  }
+      const alertBox = document.getElementById("alert-box");
+      alertBox.innerHTML = alerts.join("<br>");
+      alertBox.style.display = alerts.length > 0 ? "block" : "none";
 
-  // If 2 or more danger signs → heart attack risk
-  const criticalBox = document.getElementById("critical-box");
-  if (dangerSigns >= 2) {
-    criticalBox.innerHTML = `
-      ❗ <strong>Warning:</strong> Multiple danger signs detected.<br>
-      🚨 Possible Heart Attack Risk!<br><br>
-      💊 Recommended: Take <strong>Aspirin 300mg</strong> or <strong>Sorbitrate</strong><br>
-      🏥 Visit the nearest hospital immediately. Do not delay.
-    `;
-    criticalBox.style.display = "block";
-  } else {
-    criticalBox.style.display = "none";
-  }
-}
+      const criticalBox = document.getElementById("critical-box");
+      if (dangerSigns >= 2) {
+        criticalBox.innerHTML = `❗ <strong>Warning:</strong> Multiple danger signs detected.<br>🚨 Possible Heart Attack Risk!<br><br>💊 Recommended: Take <strong>Aspirin 300mg</strong> or <strong>Sorbitrate</strong><br>🏥 Visit the nearest hospital immediately.`;
+        criticalBox.style.display = "block";
+      } else {
+        criticalBox.style.display = "none";
+      }
+    }
 
     fetchSensorData();
-    setInterval(fetchSensorData, 10); // Every second
-  </script>
+    setInterval(fetchSensorData, 1000);
 
+    fetch(`https://api.thingspeak.com/channels/${channelID}/feeds.json?results=10`)
+      .then(res => res.json())
+      .then(data => {
+        const table = document.getElementById("historyTable");
+        data.feeds.forEach(feed => {
+          const row = table.insertRow();
+          row.innerHTML = `<td>${feed.created_at}</td><td>${feed.field1}</td><td>${parseInt(feed.field2/2)}</td><td>${feed.field3}</td>`;
+        });
+      });
+
+    const quotes = [
+      "❤️ Stay active, stay healthy!",
+      "🫀 Take deep breaths, relax your heart.",
+      "💊 Prevention is better than cure."
+    ];
+    setInterval(() => {
+      document.querySelector(".footer").innerText = quotes[Math.floor(Math.random() * quotes.length)];
+    }, 5000);
+  </script>
 </body>
 </html>
